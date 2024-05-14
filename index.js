@@ -89,7 +89,7 @@ function getServerInfo() {
 Server Information:
 - Platform: ${process.platform}
 - Architecture: ${process.arch}
-  - CPU Model: ${os.cpus()[0].model}
+  - CPU Model:  ${os.cpus()[0].model}
   - CPU Cores: ${os.cpus().length}
   - CPU Usage: ${((1 - os.freemem() / os.totalmem()) * 100).toFixed(2)}%
 - Total Memory: ${formatMemory(os.totalmem())}
