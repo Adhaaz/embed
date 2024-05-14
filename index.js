@@ -17,7 +17,6 @@ const s = require('./lib/scraper')
 const { tanggal, formatDate, getTime, isUrl, sleep, clockString, runtime, fetchJson, getBuffer } = require('./lib/function')
 const nayan = require("nayan-server");
 const fetch = require('node-fetch')
-const mongoose = require('mongoose');
 const { Hercai } = require('hercai');
 const herc = new Hercai();
 const { RsnChat } = require("rsnchat");
