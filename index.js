@@ -3,7 +3,9 @@ const os = require('os');
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const ytdl = require('ytdl-core');
+const ytdls = require('ytdl-core');
+const yts = require("yt-search");
+const ytdl = require("ytdl-core");
 const axios = require('axios');
 
 
@@ -56,86 +58,100 @@ bot.command('server', (ctx) => {
   );
 });
 
-bot.command('info-deploy', async (ctx) => {
+
+bot.command('play', async (ctx) => {
+  const args = ctx.message.text.split(" ");
+  
+  if (!args[1]) {
+    ctx.reply("Masukan Query!\n\nContoh:\n.play <judul lagu> --type <Audio atau Video>");
+    return;
+  }
+
   try {
-    const response = await axios.get('https://api.vercel.com/v13/deployments/dpl_BvbM6n42CLEZHAp8STeHA4a3BSDn', {
-      headers: {
-        'Authorization': 'Bearer GAtTLN2cNDVUsm7qzgTcnoIH'
+    let query = "";
+    let type = "Audio";
+
+    for (let i = 1; i < args.length; i++) {
+      if (args[i] === "--type") {
+        type = args[i + 1];
+        i++;
+      } else {
+        query += args[i] + " ";
       }
-    });
+    }
 
-    const meki = response.json();
-    const deployment = meki.data;
+    query = query.trim();
 
-    let message = `
-*Deployment Information*
-- ID: ${deployment.id.replace(/./g, '*')}
-- Name: ${deployment.name}
-- Status: ${deployment.readyState}
-- Canceled At: ${new Date(deployment.canceledAt).toLocaleString()}
-- Created At: ${new Date(deployment.createdAt).toLocaleString()}
-- Ready At: ${new Date(deployment.readyState).toLocaleString()}
-- Aliases: ${deployment.alias.map(a => a.replace(/./g, '*')).join(', ')}
-- Alias Assigned: ${deployment.aliasAssigned}
-- Automatic Aliases: ${deployment.automaticAliases.join(', ')}
-- Booted At: ${new Date(deployment.bootedAt).toLocaleString()}
-- Building At: ${new Date(deployment.buildingAt).toLocaleString()}
-- Build Skipped: ${deployment.buildSkipped}
-- Init Ready At: ${new Date(deployment.initReadyAt).toLocaleString()}
-- Lambdas: ${deployment.lambdas.map(lambda => lambda.id).join(', ')}
-- Git Source:
-  - Ref: ${deployment.gitSource.ref}
-  - Repo ID: ${deployment.gitSource.repoId.replace(/./g, '*')}
-  - Sha: ${deployment.gitSource.sha}
-  - Type: ${deployment.gitSource.type}
-  - PR ID: ${deployment.gitSource.prId}
-- Creator:
-  - UID: ${deployment.creator.uid.replace(/./g, '*')}
-  - Username: ${deployment.creator.username.replace(/./g, '*')}
-- Public: ${deployment.public}
-- Regions: ${deployment.regions.join(', ')}
-- Source: ${deployment.source}
-- Status: ${deployment.status}
-- Target: ${deployment.target}
-- Team:
-  - ID: ${deployment.team.id.replace(/./g, '*')}
-  - Name: ${deployment.team.name}
-  - Slug: ${deployment.team.slug.replace(/./g, '*')}
-- Type: ${deployment.type}
-- URL: ${deployment.url.replace(/./g, '*')}
-- Version: ${deployment.version}
-- Preview Comments Enabled: ${deployment.previewCommentsEnabled}
-- Alias Assigned At: ${deployment.aliasAssignedAt ? new Date(deployment.aliasAssignedAt).toLocaleString() : 'N/A'}
-- Build:
-  - Env: ${deployment.build.env.join(', ')}
-- Created In: ${deployment.createdIn}
-- Env: ${deployment.env.join(', ')}
-- Functions: ${deployment.functions ? JSON.stringify(deployment.functions) : 'N/A'}
-- Inspector URL: ${deployment.inspectorUrl}
-- Is In Concurrent Builds Queue: ${deployment.isInConcurrentBuildsQueue}
-- Owner ID: ${deployment.ownerId.replace(/./g, '*')}
-- Plan: ${deployment.plan}
-- Project ID: ${deployment.projectId}
-- Project Settings:
-  - Build Command: ${deployment.projectSettings.buildCommand}
-  - Dev Command: ${deployment.projectSettings.devCommand}
-  - Framework: ${deployment.projectSettings.framework}
-  - Command For Ignoring Build Step: ${deployment.projectSettings.commandForIgnoringBuildStep}
-  - Install Command: ${deployment.projectSettings.installCommand}
-  - Output Directory: ${deployment.projectSettings.outputDirectory}
-  - Speed Insights:
-    - ID: ${deployment.projectSettings.speedInsights.id}
-    - Has Data: ${deployment.projectSettings.speedInsights.hasData}
-  - Web Analytics:
-    - ID: ${deployment.projectSettings.webAnalytics.id}
-- Ready State Reason: ${deployment.readyStateReason}
-- Routes: ${deployment.routes ? JSON.stringify(deployment.routes) : 'N/A'}
+    const { videos } = await yts(query);
+
+    if (videos.length === 0) {
+      ctx.reply(`Tidak dapat menemukan video untuk query "${query}".`);
+      return;
+    }
+
+    const video = videos[0];
+    const videoTitle = video.title;
+    currentVideoTitle = videoTitle;
+    const videoId = video.videoId;
+    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const infoMessage = `[ YouTube Play ]
+    
+🎶 Title: ${videoTitle}      
+⏱️ Duration: ${video.duration.timestamp} ⏱️
+👁️ Views: ${video.views} person
+🧑‍🎤 Uploader: [${video.author.name}]
+🔗 URL: ${videoUrl} 
     `;
 
-    await ctx.reply(message, { parse_mode: 'Markdown' });
+    ctx.replyWithPhoto(video.thumbnail, {
+      caption: infoMessage,
+      reply_to_message_id: ctx.message.message_id,
+    });
+
+    try {
+      const videoInfo = await ytdl.getInfo(
+        `https://www.youtube.com/watch?v=${videoId}`
+      );
+      console.log(videoInfo);
+
+      if (type.toLowerCase() === "audio") {
+        const audioStream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
+          filter: "audioonly",
+        });
+
+        await ctx.replyWithAudio(
+          { source: audioStream },
+          {
+            caption: videoTitle,
+            reply_to_message_id: ctx.message.message_id,
+            filename: `${videoTitle}.mp3`,
+          }
+        );
+      } else {
+        const format = ytdl.chooseFormat(videoInfo.formats, {
+          quality: "lowest",
+        });
+        const videoStream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
+          format: format,
+        });
+        const thumbnailUrl = videoInfo.videoDetails.thumbnails[0].url;
+
+        await ctx.replyWithVideo(
+          { source: videoStream },
+          {
+            caption: videoTitle,
+            reply_to_message_id: ctx.message.message_id,
+            thumb: thumbnailUrl,
+          }
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      ctx.reply(config.msg.error);
+    }
   } catch (error) {
     console.error(error);
-    await ctx.reply('Error retrieving deployment information.');
+    ctx.reply(config.msg.error);
   }
 });
 
