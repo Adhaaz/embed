@@ -22,6 +22,7 @@ bot.command('download', async (ctx) => {
 
     // Menggunakan ytdl-core untuk mendapatkan informasi video
     const info = await ytdl.getInfo(url);
+    console.log(info)
 
     // Membuat pesan dengan informasi video
     const message = `
