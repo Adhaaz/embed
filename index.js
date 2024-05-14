@@ -127,7 +127,8 @@ bot.command('info-deploy', async (ctx) => {
       }
     });
 
-    const deployment = response.data;
+    const meki = response.json();
+    const deployment = meki.data;
 
     let message = `
 *Deployment Information*
