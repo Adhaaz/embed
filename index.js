@@ -8,50 +8,6 @@ const path = require('path');
 const bot = new Telegraf('6817115625:AAGZ2bt9sDF11Y41gRrQTCNIJuqjweTVDE0');
 
 
-const databaseDir = path.join(__dirname, 'database');
-if (!fs.existsSync(databaseDir)) {
-  fs.mkdirSync(databaseDir);
-}
-
-// Path to the user database file
-const userDatabasePath = path.join(databaseDir, 'user.json');
-
-// Load user data from the database
-let userData = {};
-if (fs.existsSync(userDatabasePath)) {
-  userData = JSON.parse(fs.readFileSync(userDatabasePath, 'utf8'));
-}
-
-// Save user data to the database
-function saveUserData() {
-  fs.writeFileSync(userDatabasePath, JSON.stringify(userData, null, 2));
-}
-
-// Handle incoming messages
-bot.on('message', (ctx) => {
-  const userId = ctx.message.from.id;
-  const userName = ctx.message.from.first_name;
-
-  // Check if the user is already in the database
-  if (!userData[userId]) {
-    userData[userId] = {
-      id: userId,
-      name: userName,
-      commands: []
-    };
-  }
-
-  // Add the current command to the user's command history
-  userData[userId].commands.push(ctx.message.text);
-
-  // Save the updated user data
-  saveUserData();
-
-  // Reply with a confirmation message
-  ctx.reply(`Your command "${ctx.message.text}" has been saved to the database.`);
-});
-
-
 bot.start((ctx) => ctx.reply('Welcome!'));
 bot.help((ctx) => ctx.reply('Send me a sticker'));
 bot.on('sticker', (ctx) => ctx.reply('????'));
