@@ -1,0 +1,19 @@
+name: Auto Update Repository
+
+on:
+  push:
+    paths:
+      - 'embed/**'
+
+jobs:
+  update-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Update Repository
+        run: |
+          git config --global user.name 'Daa'
+          git config --global user.email 'wandajoystory@gmail.com'
+          git add .
+          git commit -m "Auto update repository"
+          git push
