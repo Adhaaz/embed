@@ -77,15 +77,28 @@ Runtime Information:
 Server Information:
 - Platform: ${process.platform}
 - Architecture: ${process.arch}
-- CPU Cores: ${os.cpus().length}
-- Total Memory: ${(os.totalmem() / (1024 * 1024)).toFixed(2)} MB
-- Free Memory: ${(os.freemem() / (1024 * 1024)).toFixed(2)} MB
+  - CPU Model: ${os.cpus()[0].model}
+  - CPU Cores: ${os.cpus().length}
+  - CPU Usage: ${((1 - os.freemem() / os.totalmem()) * 100).toFixed(2)}%
+- Total Memory: ${(os.totalmem() / (1024 * 1024 * 1024)).toFixed(2)} GB
+- Free Memory: ${(os.freemem() / (1024 * 1024 * 1024)).toFixed(2)} GB (${((os.freemem() / os.totalmem()) * 100).toFixed(2)}%)
 - Uptime: ${Math.floor(os.uptime() / 3600)}h ${Math.floor((os.uptime() % 3600) / 60)}m ${Math.floor(os.uptime() % 60)}s
 - OS Type: ${os.type()}
 - OS Release: ${os.release()}
+- IP Address: ${Object.values(os.networkInterfaces()).flat().find(i => i.family === 'IPv4' && !i.internal)?.address || 'N/A'}
 `;
 
-  ctx.reply(`${runtimeInfo}\n\n${serverInfo}`);
+  // Thumbnail image and caption
+  const thumbnailUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8Y7KfvqqCbfgCk3dsSAGgaQxmrOLYPuVSPg&usqp=CAU';
+  const thumbnailCaption = 'Server Information';
+
+  ctx.replyWithPhoto(
+    { url: thumbnailUrl },
+    Markup.caption(
+      `${runtimeInfo}\n\n${serverInfo}`,
+      { caption_entity_types: ['bold', 'italic', 'code', 'pre'] }
+    )
+  );
 });
 
 bot.launch();
