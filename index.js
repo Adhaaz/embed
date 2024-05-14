@@ -4,6 +4,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const ytdl = require('ytdl-core');
+const axios = require('axios');
 
 
 const bot = new Telegraf('6817115625:AAGZ2bt9sDF11Y41gRrQTCNIJuqjweTVDE0');
@@ -117,5 +118,87 @@ function getIPAddress() {
   const addresses = Object.values(interfaces).flat().find(i => i.family === 'IPv4' && !i.internal);
   return addresses?.address;
 }
+
+bot.command('info-deploy', async (ctx) => {
+  try {
+    const response = await axios.get('https://api.vercel.com/v13/deployments/dpl_BvbM6n42CLEZHAp8STeHA4a3BSDn', {
+      headers: {
+        'Authorization': 'Bearer GAtTLN2cNDVUsm7qzgTcnoIH'
+      }
+    });
+
+    const deployment = response.data;
+
+    let message = `
+*Deployment Information*
+- ID: ${deployment.id.replace(/./g, '*')}
+- Name: ${deployment.name}
+- Status: ${deployment.readyState}
+- Canceled At: ${new Date(deployment.canceledAt).toLocaleString()}
+- Created At: ${new Date(deployment.createdAt).toLocaleString()}
+- Ready At: ${new Date(deployment.readyState).toLocaleString()}
+- Aliases: ${deployment.alias.map(a => a.replace(/./g, '*')).join(', ')}
+- Alias Assigned: ${deployment.aliasAssigned}
+- Automatic Aliases: ${deployment.automaticAliases.join(', ')}
+- Booted At: ${new Date(deployment.bootedAt).toLocaleString()}
+- Building At: ${new Date(deployment.buildingAt).toLocaleString()}
+- Build Skipped: ${deployment.buildSkipped}
+- Init Ready At: ${new Date(deployment.initReadyAt).toLocaleString()}
+- Lambdas: ${deployment.lambdas.map(lambda => lambda.id).join(', ')}
+- Git Source:
+  - Ref: ${deployment.gitSource.ref}
+  - Repo ID: ${deployment.gitSource.repoId.replace(/./g, '*')}
+  - Sha: ${deployment.gitSource.sha}
+  - Type: ${deployment.gitSource.type}
+  - PR ID: ${deployment.gitSource.prId}
+- Creator:
+  - UID: ${deployment.creator.uid.replace(/./g, '*')}
+  - Username: ${deployment.creator.username.replace(/./g, '*')}
+- Public: ${deployment.public}
+- Regions: ${deployment.regions.join(', ')}
+- Source: ${deployment.source}
+- Status: ${deployment.status}
+- Target: ${deployment.target}
+- Team:
+  - ID: ${deployment.team.id.replace(/./g, '*')}
+  - Name: ${deployment.team.name}
+  - Slug: ${deployment.team.slug.replace(/./g, '*')}
+- Type: ${deployment.type}
+- URL: ${deployment.url.replace(/./g, '*')}
+- Version: ${deployment.version}
+- Preview Comments Enabled: ${deployment.previewCommentsEnabled}
+- Alias Assigned At: ${deployment.aliasAssignedAt ? new Date(deployment.aliasAssignedAt).toLocaleString() : 'N/A'}
+- Build:
+  - Env: ${deployment.build.env.join(', ')}
+- Created In: ${deployment.createdIn}
+- Env: ${deployment.env.join(', ')}
+- Functions: ${deployment.functions ? JSON.stringify(deployment.functions) : 'N/A'}
+- Inspector URL: ${deployment.inspectorUrl}
+- Is In Concurrent Builds Queue: ${deployment.isInConcurrentBuildsQueue}
+- Owner ID: ${deployment.ownerId.replace(/./g, '*')}
+- Plan: ${deployment.plan}
+- Project ID: ${deployment.projectId}
+- Project Settings:
+  - Build Command: ${deployment.projectSettings.buildCommand}
+  - Dev Command: ${deployment.projectSettings.devCommand}
+  - Framework: ${deployment.projectSettings.framework}
+  - Command For Ignoring Build Step: ${deployment.projectSettings.commandForIgnoringBuildStep}
+  - Install Command: ${deployment.projectSettings.installCommand}
+  - Output Directory: ${deployment.projectSettings.outputDirectory}
+  - Speed Insights:
+    - ID: ${deployment.projectSettings.speedInsights.id}
+    - Has Data: ${deployment.projectSettings.speedInsights.hasData}
+  - Web Analytics:
+    - ID: ${deployment.projectSettings.webAnalytics.id}
+- Ready State Reason: ${deployment.readyStateReason}
+- Routes: ${deployment.routes ? JSON.stringify(deployment.routes) : 'N/A'}
+    `;
+
+    await ctx.reply(message, { parse_mode: 'Markdown' });
+  } catch (error) {
+    console.error(error);
+    await ctx.reply('Error retrieving deployment information.');
+  }
+});
 
 bot.launch();
