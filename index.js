@@ -18,11 +18,22 @@ bot.command('server', (ctx) => {
     deployInfo = 'N/A';
   }
 
+  // Get Vercel deployment information
+  let vercelDeployInfo;
+  try {
+    vercelDeployInfo = execSync('vercel --prod --json').toString().trim();
+    vercelDeployInfo = JSON.parse(vercelDeployInfo);
+  } catch (error) {
+    vercelDeployInfo = { url: 'N/A', deploymentId: 'N/A' };
+  }
+
   // Get runtime information
   const runtimeInfo = `
 Runtime Information:
 - Node.js Version: ${process.version}
 - Deployment Commit: ${deployInfo}
+- Vercel Deployment URL: ${vercelDeployInfo.url}
+- Vercel Deployment ID: ${vercelDeployInfo.deploymentId}
 - Process ID: ${process.pid}
 - Uptime: ${Math.floor(process.uptime() / 3600)}h ${Math.floor((process.uptime() % 3600) / 60)}m ${Math.floor(process.uptime() % 60)}s
 `;
@@ -42,6 +53,5 @@ Server Information:
 
   ctx.reply(`${runtimeInfo}\n\n${serverInfo}`);
 });
-
 
 bot.launch();
