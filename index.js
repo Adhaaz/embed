@@ -44,61 +44,78 @@ Size: ${(info.videoDetails.filesize / 1024 / 1024).toFixed(2)} MB
 });
 
 bot.command('server', (ctx) => {
-  // Get deploy information
-  let deployInfo;
-  try {
-    deployInfo = execSync('git rev-parse --short HEAD').toString().trim();
-  } catch (error) {
-    deployInfo = 'N/A';
-  }
+  const deployInfo = getDeployInfo();
+  const vercelDeployInfo = getVercelDeployInfo();
+  const runtimeInfo = getRuntimeInfo(deployInfo, vercelDeployInfo);
+  const serverInfo = getServerInfo();
 
-  // Get Vercel deployment information
-  let vercelDeployInfo;
-  try {
-    vercelDeployInfo = execSync('vercel --prod --json').toString().trim();
-    vercelDeployInfo = JSON.parse(vercelDeployInfo);
-  } catch (error) {
-    vercelDeployInfo = { url: 'N/A', deploymentId: 'N/A' };
-  }
+  ctx.replyWithPhoto(
+    { url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8Y7KfvqqCbfgCk3dsSAGgaQxmrOLYPuVSPg&usqp=CAU' },
+    { caption: `${runtimeInfo}\n\n${serverInfo}` }
+  );
+});
 
-  // Get runtime information
-  const runtimeInfo = `
+function getDeployInfo() {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch (error) {
+    return 'N/A';
+  }
+}
+
+function getVercelDeployInfo() {
+  try {
+    const vercelOutput = execSync('vercel --prod --json').toString().trim();
+    return JSON.parse(vercelOutput);
+  } catch (error) {
+    return { url: 'N/A', deploymentId: 'N/A' };
+  }
+}
+
+function getRuntimeInfo(deployInfo, vercelDeployInfo) {
+  return `
 Runtime Information:
 - Node.js Version: ${process.version}
 - Deployment Commit: ${deployInfo}
 - Vercel Deployment URL: ${vercelDeployInfo.url}
 - Vercel Deployment ID: ${vercelDeployInfo.deploymentId}
 - Process ID: ${process.pid}
-- Uptime: ${Math.floor(process.uptime() / 3600)}h ${Math.floor((process.uptime() % 3600) / 60)}m ${Math.floor(process.uptime() % 60)}s
+- Uptime: ${formatUptime(process.uptime())}
 `;
+}
 
-  // Get server information
-  const serverInfo = `
+function getServerInfo() {
+  return `
 Server Information:
 - Platform: ${process.platform}
 - Architecture: ${process.arch}
   - CPU Model: ${os.cpus()[0].model}
   - CPU Cores: ${os.cpus().length}
   - CPU Usage: ${((1 - os.freemem() / os.totalmem()) * 100).toFixed(2)}%
-- Total Memory: ${(os.totalmem() / (1024 * 1024 * 1024)).toFixed(2)} GB
-- Free Memory: ${(os.freemem() / (1024 * 1024 * 1024)).toFixed(2)} GB (${((os.freemem() / os.totalmem()) * 100).toFixed(2)}%)
-- Uptime: ${Math.floor(os.uptime() / 3600)}h ${Math.floor((os.uptime() % 3600) / 60)}m ${Math.floor(os.uptime() % 60)}s
+- Total Memory: ${formatMemory(os.totalmem())}
+- Free Memory: ${formatMemory(os.freemem())} (${((os.freemem() / os.totalmem()) * 100).toFixed(2)}%)
+- Uptime: ${formatUptime(os.uptime())}
 - OS Type: ${os.type()}
 - OS Release: ${os.release()}
-- IP Address: ${Object.values(os.networkInterfaces()).flat().find(i => i.family === 'IPv4' && !i.internal)?.address || 'N/A'}
+- IP Address: ${getIPAddress() || 'N/A'}
 `;
+}
 
-  // Thumbnail image and caption
-  const thumbnailUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8Y7KfvqqCbfgCk3dsSAGgaQxmrOLYPuVSPg&usqp=CAU';
-  const thumbnailCaption = 'Server Information';
+function formatUptime(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${hours}h ${minutes}m ${secs}s`;
+}
 
-  ctx.replyWithPhoto(
-    { url: thumbnailUrl },
-    Markup.caption(
-      `${runtimeInfo}\n\n${serverInfo}`,
-      { caption_entity_types: ['bold', 'italic', 'code', 'pre'] }
-    )
-  );
-});
+function formatMemory(bytes) {
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+function getIPAddress() {
+  const interfaces = os.networkInterfaces();
+  const addresses = Object.values(interfaces).flat().find(i => i.family === 'IPv4' && !i.internal);
+  return addresses?.address;
+}
 
 bot.launch();
