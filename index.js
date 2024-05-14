@@ -56,69 +56,6 @@ bot.command('server', (ctx) => {
   );
 });
 
-function getDeployInfo() {
-  try {
-    return execSync('git rev-parse --short HEAD').toString().trim();
-  } catch (error) {
-    return 'N/A';
-  }
-}
-
-function getVercelDeployInfo() {
-  try {
-    const vercelOutput = execSync('vercel --prod --json').toString().trim();
-    return JSON.parse(vercelOutput);
-  } catch (error) {
-    return { url: 'N/A', deploymentId: 'N/A' };
-  }
-}
-
-function getRuntimeInfo(deployInfo, vercelDeployInfo) {
-  return `
-Runtime Information:
-- Node.js Version: ${process.version}
-- Deployment Commit: ${deployInfo}
-- Vercel Deployment URL: ${vercelDeployInfo.url}
-- Vercel Deployment ID: ${vercelDeployInfo.deploymentId}
-- Process ID: ${process.pid}
-- Uptime: ${formatUptime(process.uptime())}
-`;
-}
-
-function getServerInfo() {
-  return `
-Server Information:
-- Platform: ${process.platform}
-- Architecture: ${process.arch}
-  - CPU Model:  ${os.cpus()[0].model}
-  - CPU Cores: ${os.cpus().length}
-  - CPU Usage: ${((1 - os.freemem() / os.totalmem()) * 100).toFixed(2)}%
-- Total Memory: ${formatMemory(os.totalmem())}
-- Free Memory: ${formatMemory(os.freemem())} (${((os.freemem() / os.totalmem()) * 100).toFixed(2)}%)
-- Uptime: ${formatUptime(os.uptime())}
-- OS Type: ${os.type()}
-- OS Release: ${os.release()}
-- IP Address: ${getIPAddress() || 'N/A'}
-`;
-}
-
-function formatUptime(seconds) {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${hours}h ${minutes}m ${secs}s`;
-}
-
-function formatMemory(bytes) {
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-}
-
-function getIPAddress() {
-  const interfaces = os.networkInterfaces();
-  const addresses = Object.values(interfaces).flat().find(i => i.family === 'IPv4' && !i.internal);
-  return addresses?.address;
-}
-
 bot.command('info-deploy', async (ctx) => {
   try {
     const response = await axios.get('https://api.vercel.com/v13/deployments/dpl_BvbM6n42CLEZHAp8STeHA4a3BSDn', {
@@ -201,5 +138,69 @@ bot.command('info-deploy', async (ctx) => {
     await ctx.reply('Error retrieving deployment information.');
   }
 });
+
+function getDeployInfo() {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch (error) {
+    return 'N/A';
+  }
+}
+
+function getVercelDeployInfo() {
+  try {
+    const vercelOutput = execSync('vercel --prod --json').toString().trim();
+    return JSON.parse(vercelOutput);
+  } catch (error) {
+    return { url: 'N/A', deploymentId: 'N/A' };
+  }
+}
+
+function getRuntimeInfo(deployInfo, vercelDeployInfo) {
+  return `
+Runtime Information:
+- Node.js Version: ${process.version}
+- Deployment Commit: ${deployInfo}
+- Vercel Deployment URL: ${vercelDeployInfo.url}
+- Vercel Deployment ID: ${vercelDeployInfo.deploymentId}
+- Process ID: ${process.pid}
+- Uptime: ${formatUptime(process.uptime())}
+`;
+}
+
+function getServerInfo() {
+  return `
+Server Information:
+- Platform: ${process.platform}
+- Architecture: ${process.arch}
+  - CPU Model:  ${os.cpus()[0].model}
+  - CPU Cores: ${os.cpus().length}
+  - CPU Usage: ${((1 - os.freemem() / os.totalmem()) * 100).toFixed(2)}%
+- Total Memory: ${formatMemory(os.totalmem())}
+- Free Memory: ${formatMemory(os.freemem())} (${((os.freemem() / os.totalmem()) * 100).toFixed(2)}%)
+- Uptime: ${formatUptime(os.uptime())}
+- OS Type: ${os.type()}
+- OS Release: ${os.release()}
+- IP Address: ${getIPAddress() || 'N/A'}
+`;
+}
+
+function formatUptime(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${hours}h ${minutes}m ${secs}s`;
+}
+
+function formatMemory(bytes) {
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+function getIPAddress() {
+  const interfaces = os.networkInterfaces();
+  const addresses = Object.values(interfaces).flat().find(i => i.family === 'IPv4' && !i.internal);
+  return addresses?.address;
+}
+
 
 bot.launch();
