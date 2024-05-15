@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "name": "telegram-chatbot",
+  "builds": [
+    {
+      "src": "run.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "run.js"
+    }
+  ],
+  "env": {
+    "VCAP_SERVICES": "{\"application\":{\"limits\":{\"mem\":8589934592}}}"
+  }
+}
